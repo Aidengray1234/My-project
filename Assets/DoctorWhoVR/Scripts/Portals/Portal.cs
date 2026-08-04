@@ -6,11 +6,12 @@ using UnityEngine.Rendering.Universal;
 namespace DoctorWhoVR.Portals
 {
     /// <summary>
-    /// Two-way doorway portal for URP and OpenXR.
+    /// Stable two-way doorway portal for URP/OpenXR.
     ///
-    /// Rendering is performed once per visible eye. The portal surface samples
-    /// the result by screen position, so it behaves like a window instead of
-    /// stretching the complete camera image across the doorway mesh.
+    /// Portal V3 deliberately uses one center-eye render for both headset eyes.
+    /// This removes XR eye-matrix roll/aim errors first. Once the doorway is
+    /// fully stable, true stereo rendering can be added without changing
+    /// crossing or teleport behavior.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider))]
@@ -22,7 +23,10 @@ namespace DoctorWhoVR.Portals
             public float PreviousSide;
         }
 
-        private static readonly Quaternion HalfTurn =
+        private static readonly Matrix4x4 HalfTurnMatrix =
+            Matrix4x4.Rotate(Quaternion.Euler(0f, 180f, 0f));
+
+        private static readonly Quaternion HalfTurnRotation =
             Quaternion.Euler(0f, 180f, 0f);
 
         private static bool s_IsRenderingPortal;
@@ -39,31 +43,27 @@ namespace DoctorWhoVR.Portals
 
         [Header("Rendering")]
         [SerializeField, Range(256, 2048)] private int _textureWidth = 1024;
-        [SerializeField, Range(0.5f, 2f)] private float _textureAspect = 1f;
         [SerializeField, Min(1f)] private float _maximumRenderDistance = 60f;
-        [SerializeField, Min(0.001f)] private float _nearClipOffset = 0.06f;
+        [SerializeField, Min(0.001f)] private float _nearClipOffset = 0.08f;
         [SerializeField] private int _portalSurfaceLayer = 30;
         [SerializeField] private bool _renderFromBackSide;
 
-        private readonly Dictionary<PortalTraveller, TravellerState> _travellerStates =
-            new Dictionary<PortalTraveller, TravellerState>();
+        private readonly Dictionary<PortalTraveller, TravellerState>
+            _travellerStates =
+                new Dictionary<PortalTraveller, TravellerState>();
 
         private readonly List<PortalTraveller> _removeBuffer =
             new List<PortalTraveller>();
 
         private Camera _portalCamera;
-        private RenderTexture _leftEyeTexture;
-        private RenderTexture _rightEyeTexture;
+        private RenderTexture _portalTexture;
         private Material _runtimeMaterial;
 
         private int _currentTextureWidth;
         private int _currentTextureHeight;
 
-        private static readonly int LeftTextureId =
-            Shader.PropertyToID("_LeftTex");
-
-        private static readonly int RightTextureId =
-            Shader.PropertyToID("_RightTex");
+        private static readonly int PortalTextureId =
+            Shader.PropertyToID("_PortalTex");
 
         public Portal Target
         {
@@ -88,7 +88,7 @@ namespace DoctorWhoVR.Portals
         private void Awake()
         {
             ConfigureTrigger();
-            EnsureRenderResources(null);
+            EnsureRenderResources(null, Matrix4x4.identity);
         }
 
         private void OnEnable()
@@ -132,6 +132,17 @@ namespace DoctorWhoVR.Portals
                 _openingWidth,
                 _openingHeight,
                 0.5f);
+        }
+
+        private Matrix4x4 GetSourceToTargetMatrix()
+        {
+            if (_target == null)
+                return Matrix4x4.identity;
+
+            return
+                _target.transform.localToWorldMatrix *
+                HalfTurnMatrix *
+                transform.worldToLocalMatrix;
         }
 
         private void TrackTravellerCrossings()
@@ -256,27 +267,15 @@ namespace DoctorWhoVR.Portals
         public Vector3 TransformPointToTarget(
             Vector3 worldPoint)
         {
-            Vector3 localPoint =
-                transform.InverseTransformPoint(worldPoint);
-
-            localPoint = HalfTurn * localPoint;
-
-            return _target.transform.TransformPoint(
-                localPoint);
+            return GetSourceToTargetMatrix()
+                .MultiplyPoint3x4(worldPoint);
         }
 
         public Vector3 TransformDirectionToTarget(
             Vector3 worldDirection)
         {
-            Vector3 localDirection =
-                transform.InverseTransformDirection(
-                    worldDirection);
-
-            localDirection =
-                HalfTurn * localDirection;
-
-            return _target.transform.TransformDirection(
-                localDirection);
+            return GetSourceToTargetMatrix()
+                .MultiplyVector(worldDirection);
         }
 
         public Quaternion TransformRotationToTarget(
@@ -284,7 +283,7 @@ namespace DoctorWhoVR.Portals
         {
             return
                 _target.transform.rotation *
-                HalfTurn *
+                HalfTurnRotation *
                 Quaternion.Inverse(transform.rotation) *
                 worldRotation;
         }
@@ -297,8 +296,7 @@ namespace DoctorWhoVR.Portals
                 _target == null ||
                 _surfaceRenderer == null ||
                 sourceCamera == null ||
-                sourceCamera.cameraType !=
-                    CameraType.Game ||
+                sourceCamera.cameraType != CameraType.Game ||
                 !sourceCamera.CompareTag("MainCamera"))
             {
                 return;
@@ -307,11 +305,16 @@ namespace DoctorWhoVR.Portals
             if (!ShouldRender(sourceCamera))
                 return;
 
-            EnsureRenderResources(sourceCamera);
+            Matrix4x4 sourceProjection =
+                BuildStableProjection(sourceCamera);
+
+            EnsureRenderResources(
+                sourceCamera,
+                sourceProjection);
 
             if (_portalCamera == null ||
                 _runtimeMaterial == null ||
-                _leftEyeTexture == null)
+                _portalTexture == null)
             {
                 return;
             }
@@ -321,45 +324,32 @@ namespace DoctorWhoVR.Portals
             try
             {
                 CopyCameraSettings(sourceCamera);
+                PositionPortalCamera(sourceCamera);
 
-                if (sourceCamera.stereoEnabled)
-                {
-                    RenderEye(
-                        context,
-                        sourceCamera,
-                        Camera.StereoscopicEye.Left,
-                        _leftEyeTexture);
+                _portalCamera.targetTexture =
+                    _portalTexture;
 
-                    RenderEye(
-                        context,
-                        sourceCamera,
-                        Camera.StereoscopicEye.Right,
-                        _rightEyeTexture);
+                _portalCamera.projectionMatrix =
+                    sourceProjection;
 
-                    _runtimeMaterial.SetTexture(
-                        LeftTextureId,
-                        _leftEyeTexture);
+                Vector4 clipPlane =
+                    BuildCameraSpaceClipPlane();
 
-                    _runtimeMaterial.SetTexture(
-                        RightTextureId,
-                        _rightEyeTexture);
-                }
-                else
-                {
-                    RenderEye(
-                        context,
-                        sourceCamera,
-                        Camera.StereoscopicEye.Left,
-                        _leftEyeTexture);
+                _portalCamera.projectionMatrix =
+                    _portalCamera.CalculateObliqueMatrix(
+                        clipPlane);
 
-                    _runtimeMaterial.SetTexture(
-                        LeftTextureId,
-                        _leftEyeTexture);
+                _portalCamera.cullingMatrix =
+                    _portalCamera.projectionMatrix *
+                    _portalCamera.worldToCameraMatrix;
 
-                    _runtimeMaterial.SetTexture(
-                        RightTextureId,
-                        _leftEyeTexture);
-                }
+                UniversalRenderPipeline.RenderSingleCamera(
+                    context,
+                    _portalCamera);
+
+                _runtimeMaterial.SetTexture(
+                    PortalTextureId,
+                    _portalTexture);
             }
             finally
             {
@@ -371,6 +361,84 @@ namespace DoctorWhoVR.Portals
 
                 s_IsRenderingPortal = false;
             }
+        }
+
+        private Matrix4x4 BuildStableProjection(
+            Camera sourceCamera)
+        {
+            if (!sourceCamera.stereoEnabled)
+                return sourceCamera.projectionMatrix;
+
+            Matrix4x4 left =
+                sourceCamera.GetStereoProjectionMatrix(
+                    Camera.StereoscopicEye.Left);
+
+            Matrix4x4 right =
+                sourceCamera.GetStereoProjectionMatrix(
+                    Camera.StereoscopicEye.Right);
+
+            Matrix4x4 center = left;
+
+            // Remove the per-eye horizontal shift. The portal is rendered from
+            // the tracked head center, so the projection must also be centered.
+            center.m00 = (left.m00 + right.m00) * 0.5f;
+            center.m11 = (left.m11 + right.m11) * 0.5f;
+            center.m02 = 0f;
+            center.m12 = (left.m12 + right.m12) * 0.5f;
+
+            return center;
+        }
+
+        private void PositionPortalCamera(
+            Camera sourceCamera)
+        {
+            Matrix4x4 mappedCameraMatrix =
+                GetSourceToTargetMatrix() *
+                sourceCamera.transform.localToWorldMatrix;
+
+            Vector4 positionColumn =
+                mappedCameraMatrix.GetColumn(3);
+
+            Vector3 position =
+                new Vector3(
+                    positionColumn.x,
+                    positionColumn.y,
+                    positionColumn.z);
+
+            Vector4 forwardColumn =
+                mappedCameraMatrix.GetColumn(2);
+
+            Vector4 upColumn =
+                mappedCameraMatrix.GetColumn(1);
+
+            Vector3 forward =
+                new Vector3(
+                    forwardColumn.x,
+                    forwardColumn.y,
+                    forwardColumn.z).normalized;
+
+            Vector3 up =
+                new Vector3(
+                    upColumn.x,
+                    upColumn.y,
+                    upColumn.z).normalized;
+
+            if (forward.sqrMagnitude < 0.99f)
+                forward = TransformDirectionToTarget(
+                    sourceCamera.transform.forward)
+                    .normalized;
+
+            if (up.sqrMagnitude < 0.99f)
+                up = TransformDirectionToTarget(
+                    sourceCamera.transform.up)
+                    .normalized;
+
+            Quaternion rotation =
+                Quaternion.LookRotation(forward, up);
+
+            _portalCamera.transform.SetPositionAndRotation(
+                position,
+                rotation);
         }
 
         private bool ShouldRender(
@@ -440,79 +508,6 @@ namespace DoctorWhoVR.Portals
                 ~(1 << safeLayer);
         }
 
-        private void RenderEye(
-            ScriptableRenderContext context,
-            Camera sourceCamera,
-            Camera.StereoscopicEye eye,
-            RenderTexture destination)
-        {
-            Vector3 sourceEyePosition;
-            Quaternion sourceEyeRotation;
-            Matrix4x4 sourceProjection;
-
-            if (sourceCamera.stereoEnabled)
-            {
-                Matrix4x4 eyeToWorld =
-                    sourceCamera
-                        .GetStereoViewMatrix(eye)
-                        .inverse;
-
-                Vector4 positionColumn =
-                    eyeToWorld.GetColumn(3);
-
-                sourceEyePosition =
-                    new Vector3(
-                        positionColumn.x,
-                        positionColumn.y,
-                        positionColumn.z);
-
-                sourceEyeRotation =
-                    eyeToWorld.rotation;
-
-                sourceProjection =
-                    sourceCamera
-                        .GetStereoProjectionMatrix(eye);
-            }
-            else
-            {
-                sourceEyePosition =
-                    sourceCamera.transform.position;
-
-                sourceEyeRotation =
-                    sourceCamera.transform.rotation;
-
-                sourceProjection =
-                    sourceCamera.projectionMatrix;
-            }
-
-            _portalCamera.transform.SetPositionAndRotation(
-                TransformPointToTarget(
-                    sourceEyePosition),
-                TransformRotationToTarget(
-                    sourceEyeRotation));
-
-            _portalCamera.targetTexture =
-                destination;
-
-            _portalCamera.projectionMatrix =
-                sourceProjection;
-
-            Vector4 clipPlane =
-                BuildCameraSpaceClipPlane();
-
-            _portalCamera.projectionMatrix =
-                _portalCamera.CalculateObliqueMatrix(
-                    clipPlane);
-
-            _portalCamera.cullingMatrix =
-                _portalCamera.projectionMatrix *
-                _portalCamera.worldToCameraMatrix;
-
-            UniversalRenderPipeline.RenderSingleCamera(
-                context,
-                _portalCamera);
-        }
-
         private Vector4 BuildCameraSpaceClipPlane()
         {
             Vector3 destinationPlanePosition =
@@ -555,7 +550,8 @@ namespace DoctorWhoVR.Portals
         }
 
         private void EnsureRenderResources(
-            Camera sourceCamera)
+            Camera sourceCamera,
+            Matrix4x4 projection)
         {
             EnsureRuntimeMaterial();
             EnsurePortalCamera();
@@ -565,38 +561,41 @@ namespace DoctorWhoVR.Portals
                 256,
                 2048);
 
-            float aspect =
-                sourceCamera != null &&
-                sourceCamera.aspect > 0.1f
-                    ? sourceCamera.aspect
-                    : Mathf.Max(
-                        0.5f,
-                        _textureAspect);
+            float aspect = 1f;
+
+            if (Mathf.Abs(projection.m00) > 0.0001f &&
+                Mathf.Abs(projection.m11) > 0.0001f)
+            {
+                aspect =
+                    Mathf.Abs(
+                        projection.m11 /
+                        projection.m00);
+            }
+            else if (sourceCamera != null &&
+                     sourceCamera.aspect > 0.1f)
+            {
+                aspect = sourceCamera.aspect;
+            }
+
+            aspect = Mathf.Clamp(aspect, 0.5f, 2f);
 
             int height = Mathf.Clamp(
                 Mathf.RoundToInt(width / aspect),
                 256,
                 2048);
 
-            if (_leftEyeTexture == null ||
-                _rightEyeTexture == null ||
+            if (_portalTexture == null ||
                 _currentTextureWidth != width ||
                 _currentTextureHeight != height)
             {
-                ReleaseRenderTextures();
+                ReleaseRenderTexture();
 
                 _currentTextureWidth = width;
                 _currentTextureHeight = height;
 
-                _leftEyeTexture =
-                    CreateEyeTexture(
-                        name + " Left Eye",
-                        width,
-                        height);
-
-                _rightEyeTexture =
-                    CreateEyeTexture(
-                        name + " Right Eye",
+                _portalTexture =
+                    CreatePortalTexture(
+                        name + " Portal View",
                         width,
                         height);
             }
@@ -616,8 +615,7 @@ namespace DoctorWhoVR.Portals
                     _surfaceRenderer.sharedMaterial);
 
             _runtimeMaterial.name =
-                _surfaceRenderer
-                    .sharedMaterial.name +
+                _surfaceRenderer.sharedMaterial.name +
                 " (Runtime " + name + ")";
 
             _surfaceRenderer.material =
@@ -644,10 +642,9 @@ namespace DoctorWhoVR.Portals
             _portalCamera.stereoTargetEye =
                 StereoTargetEyeMask.None;
 
-            UniversalAdditionalCameraData
-                additionalData =
-                    cameraObject.GetComponent<
-                        UniversalAdditionalCameraData>();
+            UniversalAdditionalCameraData additionalData =
+                cameraObject.GetComponent<
+                    UniversalAdditionalCameraData>();
 
             if (additionalData == null)
             {
@@ -665,7 +662,7 @@ namespace DoctorWhoVR.Portals
                 CameraOverrideOption.Off;
         }
 
-        private RenderTexture CreateEyeTexture(
+        private RenderTexture CreatePortalTexture(
             string textureName,
             int width,
             int height)
@@ -690,7 +687,7 @@ namespace DoctorWhoVR.Portals
 
         private void ReleaseRenderResources()
         {
-            ReleaseRenderTextures();
+            ReleaseRenderTexture();
 
             if (_portalCamera != null)
             {
@@ -705,21 +702,14 @@ namespace DoctorWhoVR.Portals
             }
         }
 
-        private void ReleaseRenderTextures()
+        private void ReleaseRenderTexture()
         {
-            if (_leftEyeTexture != null)
-            {
-                _leftEyeTexture.Release();
-                Destroy(_leftEyeTexture);
-                _leftEyeTexture = null;
-            }
+            if (_portalTexture == null)
+                return;
 
-            if (_rightEyeTexture != null)
-            {
-                _rightEyeTexture.Release();
-                Destroy(_rightEyeTexture);
-                _rightEyeTexture = null;
-            }
+            _portalTexture.Release();
+            Destroy(_portalTexture);
+            _portalTexture = null;
         }
     }
 }

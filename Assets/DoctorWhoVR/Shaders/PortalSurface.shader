@@ -2,8 +2,7 @@ Shader "DoctorWhoVR/PortalSurface"
 {
     Properties
     {
-        _LeftTex ("Left Eye", 2D) = "black" {}
-        _RightTex ("Right Eye", 2D) = "black" {}
+        _PortalTex ("Portal View", 2D) = "black" {}
         _Tint ("Tint", Color) = (1, 1, 1, 1)
         _Brightness ("Brightness", Range(0.25, 2)) = 1
     }
@@ -19,7 +18,7 @@ Shader "DoctorWhoVR/PortalSurface"
 
         Pass
         {
-            Name "PortalWindow"
+            Name "StablePortalWindow"
 
             Cull Off
             ZWrite On
@@ -34,14 +33,10 @@ Shader "DoctorWhoVR/PortalSurface"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            TEXTURE2D(_LeftTex);
-            SAMPLER(sampler_LeftTex);
+            TEXTURE2D(_PortalTex);
+            SAMPLER(sampler_PortalTex);
 
-            TEXTURE2D(_RightTex);
-            SAMPLER(sampler_RightTex);
-
-            float4 _LeftTex_TexelSize;
-            float4 _RightTex_TexelSize;
+            float4 _PortalTex_TexelSize;
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
@@ -89,27 +84,16 @@ Shader "DoctorWhoVR/PortalSurface"
                         input.screenPosition.w,
                         0.00001);
 
-                // Camera render textures can be vertically inverted on
-                // DirectX depending on Unity's active render target.
-                if (_LeftTex_TexelSize.y < 0)
+                #if UNITY_UV_STARTS_AT_TOP
+                if (_PortalTex_TexelSize.y < 0)
                     uv.y = 1.0 - uv.y;
-
-                half4 leftEye =
-                    SAMPLE_TEXTURE2D(
-                        _LeftTex,
-                        sampler_LeftTex,
-                        uv);
-
-                half4 rightEye =
-                    SAMPLE_TEXTURE2D(
-                        _RightTex,
-                        sampler_RightTex,
-                        uv);
+                #endif
 
                 half4 portalColor =
-                    unity_StereoEyeIndex == 0
-                        ? leftEye
-                        : rightEye;
+                    SAMPLE_TEXTURE2D(
+                        _PortalTex,
+                        sampler_PortalTex,
+                        uv);
 
                 portalColor.rgb *=
                     _Tint.rgb *
