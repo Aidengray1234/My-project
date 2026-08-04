@@ -4,8 +4,8 @@ using UnityEngine;
 namespace DoctorWhoVR.StencilPortalV6
 {
     /// <summary>
-    /// Handles reliable two-way XR crossing. The visible portal itself is
-    /// rendered by stencil-masked proxy geometry, not by RenderTextures.
+    /// Handles reliable two-way XR crossing. V7 exposes the doorway geometry
+    /// helpers so hands and rigidbodies can use the exact same crossing test.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider))]
@@ -43,6 +43,16 @@ namespace DoctorWhoVR.StencilPortalV6
         public float ExitOffset
         {
             get { return _exitOffset; }
+        }
+
+        public float OpeningWidth
+        {
+            get { return _openingWidth; }
+        }
+
+        public float OpeningHeight
+        {
+            get { return _openingHeight; }
         }
 
         public void Configure(StencilPortal target)
@@ -107,7 +117,7 @@ namespace DoctorWhoVR.StencilPortalV6
                     traveller.Head.position;
 
                 float currentSide =
-                    SignedDistance(currentHeadPosition);
+                    SignedDistanceToPlane(currentHeadPosition);
 
                 TravellerState state;
 
@@ -145,7 +155,7 @@ namespace DoctorWhoVR.StencilPortalV6
                             currentHeadPosition,
                             amount);
 
-                    if (IsInsideOpening(crossingPoint))
+                    if (ContainsPoint(crossingPoint))
                     {
                         traveller.TeleportThrough(this);
 
@@ -153,7 +163,7 @@ namespace DoctorWhoVR.StencilPortalV6
                             traveller.Head.position;
 
                         currentSide =
-                            SignedDistance(currentHeadPosition);
+                            SignedDistanceToPlane(currentHeadPosition);
                     }
                 }
 
@@ -180,21 +190,26 @@ namespace DoctorWhoVR.StencilPortalV6
             }
         }
 
-        private float SignedDistance(Vector3 worldPoint)
+        public float SignedDistanceToPlane(Vector3 worldPoint)
         {
             return Vector3.Dot(
                 transform.forward,
                 worldPoint - transform.position);
         }
 
-        private bool IsInsideOpening(Vector3 worldPoint)
+        public bool ContainsPoint(
+            Vector3 worldPoint,
+            float horizontalPadding = 0f,
+            float verticalPadding = 0f)
         {
             Vector3 localPoint =
                 transform.InverseTransformPoint(worldPoint);
 
             return
-                Mathf.Abs(localPoint.x) <= _openingWidth * 0.5f &&
-                Mathf.Abs(localPoint.y) <= _openingHeight * 0.5f;
+                Mathf.Abs(localPoint.x) <=
+                    _openingWidth * 0.5f + horizontalPadding &&
+                Mathf.Abs(localPoint.y) <=
+                    _openingHeight * 0.5f + verticalPadding;
         }
 
         public Vector3 TransformPointToTarget(Vector3 worldPoint)
