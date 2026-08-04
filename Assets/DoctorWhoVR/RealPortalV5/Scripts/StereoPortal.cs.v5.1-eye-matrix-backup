@@ -7,9 +7,10 @@ using UnityEngine.XR;
 namespace DoctorWhoVR.RealPortalV5
 {
     /// <summary>
-    /// V5.2 non-recursive, two-way stereo VR portal for Unity 2021.3,
-    /// URP and OpenXR. Each eye keeps its OpenXR position and projection,
-    /// while Unity builds the portal view matrix from a normal Camera Transform.
+    /// A non-recursive, two-way stereo VR portal for Unity 2021.3, URP and
+    /// OpenXR. Each eye receives its own render texture. Camera orientation is
+    /// never extracted from an XR matrix; the exact view matrix is transformed
+    /// directly through the linked portals.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider))]
@@ -372,134 +373,129 @@ namespace DoctorWhoVR.RealPortalV5
                 _surfaceRenderer.bounds);
         }
 
-private void RenderMono(
-    ScriptableRenderContext context,
-    Camera sourceCamera,
-    RenderTexture destination)
-{
-    Vector3 portalPosition =
-        TransformPointToTarget(
-            sourceCamera.transform.position);
+        private void RenderMono(
+            ScriptableRenderContext context,
+            Camera sourceCamera,
+            RenderTexture destination)
+        {
+            Matrix4x4 sourceView =
+                sourceCamera.worldToCameraMatrix;
 
-    Quaternion portalRotation =
-        TransformRotationToTarget(
-            sourceCamera.transform.rotation);
+            Matrix4x4 sourceProjection =
+                sourceCamera.projectionMatrix;
 
-    RenderPortalCamera(
-        context,
-        portalPosition,
-        portalRotation,
-        sourceCamera.projectionMatrix,
-        destination);
-}
+            RenderMappedView(
+                context,
+                sourceCamera,
+                sourceView,
+                sourceProjection,
+                sourceCamera.transform.position,
+                sourceCamera.transform.rotation,
+                destination);
+        }
 
-private void RenderEye(
-    ScriptableRenderContext context,
-    Camera sourceCamera,
-    Camera.StereoscopicEye eye,
-    RenderTexture destination)
-{
-    Matrix4x4 eyeToWorld =
-        sourceCamera.GetStereoViewMatrix(eye).inverse;
+        private void RenderEye(
+            ScriptableRenderContext context,
+            Camera sourceCamera,
+            Camera.StereoscopicEye eye,
+            RenderTexture destination)
+        {
+            Matrix4x4 sourceView =
+                sourceCamera.GetStereoViewMatrix(eye);
 
-    Vector4 eyePositionColumn =
-        eyeToWorld.GetColumn(3);
+            Matrix4x4 sourceProjection =
+                sourceCamera.GetStereoProjectionMatrix(eye);
 
-    Vector3 sourceEyePosition =
-        new Vector3(
-            eyePositionColumn.x,
-            eyePositionColumn.y,
-            eyePositionColumn.z);
+            Matrix4x4 eyeToWorld = sourceView.inverse;
+            Vector4 eyePositionColumn = eyeToWorld.GetColumn(3);
 
-    Vector3 portalEyePosition =
-        TransformPointToTarget(sourceEyePosition);
+            Vector3 sourceEyePosition =
+                new Vector3(
+                    eyePositionColumn.x,
+                    eyePositionColumn.y,
+                    eyePositionColumn.z);
 
-    // OpenXR eyes have separate positions and asymmetric projections,
-    // but share the headset orientation. Do not extract rotation from
-    // the XR view matrix.
-    Quaternion portalHeadRotation =
-        TransformRotationToTarget(
-            sourceCamera.transform.rotation);
+            RenderMappedView(
+                context,
+                sourceCamera,
+                sourceView,
+                sourceProjection,
+                sourceEyePosition,
+                sourceCamera.transform.rotation,
+                destination);
+        }
 
-    Matrix4x4 eyeProjection =
-        sourceCamera.GetStereoProjectionMatrix(eye);
+        private void RenderMappedView(
+            ScriptableRenderContext context,
+            Camera sourceCamera,
+            Matrix4x4 sourceView,
+            Matrix4x4 sourceProjection,
+            Vector3 sourceEyePosition,
+            Quaternion sourceHeadRotation,
+            RenderTexture destination)
+        {
+            Matrix4x4 sourceToTarget =
+                SourceToTargetMatrix();
 
-    RenderPortalCamera(
-        context,
-        portalEyePosition,
-        portalHeadRotation,
-        eyeProjection,
-        destination);
-}
+            Matrix4x4 targetToSource =
+                sourceToTarget.inverse;
 
-private void RenderPortalCamera(
-    ScriptableRenderContext context,
-    Vector3 portalPosition,
-    Quaternion portalRotation,
-    Matrix4x4 projection,
-    RenderTexture destination)
-{
-    _portalCamera.ResetWorldToCameraMatrix();
-    _portalCamera.ResetProjectionMatrix();
-    _portalCamera.ResetCullingMatrix();
+            // Exact portal view transformation:
+            // Vportal = Vsource * inverse(MsourceToTarget)
+            Matrix4x4 portalView =
+                sourceView * targetToSource;
 
-    _portalCamera.transform.SetPositionAndRotation(
-        portalPosition,
-        portalRotation);
+            Vector3 portalEyePosition =
+                sourceToTarget.MultiplyPoint3x4(sourceEyePosition);
 
-    // Let Unity generate its normal camera-space handedness from the
-    // Transform. Directly multiplying XR view matrices caused the two
-    // portal eyes to aim differently.
-    Matrix4x4 portalView =
-        _portalCamera.worldToCameraMatrix;
+            Quaternion portalRotation =
+                TransformRotationToTarget(sourceHeadRotation);
 
-    _portalCamera.targetTexture = destination;
-    _portalCamera.projectionMatrix = projection;
+            _portalCamera.transform.SetPositionAndRotation(
+                portalEyePosition,
+                portalRotation);
 
-    Vector4 clipPlaneCameraSpace =
-        BuildClipPlaneCameraSpace(portalView);
+            _portalCamera.worldToCameraMatrix = portalView;
+            _portalCamera.projectionMatrix = sourceProjection;
+            _portalCamera.targetTexture = destination;
 
-    _portalCamera.projectionMatrix =
-        _portalCamera.CalculateObliqueMatrix(
-            clipPlaneCameraSpace);
+            Vector4 clipPlaneCameraSpace =
+                BuildClipPlaneCameraSpace(portalView);
 
-    _portalCamera.cullingMatrix =
-        _portalCamera.projectionMatrix *
-        portalView;
+            _portalCamera.projectionMatrix =
+                _portalCamera.CalculateObliqueMatrix(
+                    clipPlaneCameraSpace);
 
-    UniversalRenderPipeline.RenderSingleCamera(
-        context,
-        _portalCamera);
-}
+            UniversalRenderPipeline.RenderSingleCamera(
+                context,
+                _portalCamera);
+        }
 
-private Vector4 BuildClipPlaneCameraSpace(
-    Matrix4x4 portalView)
-{
-    Vector3 planePoint =
-        _target.transform.position +
-        _target.transform.forward *
-        _clipPlaneOffset;
+        private Vector4 BuildClipPlaneCameraSpace(
+            Matrix4x4 portalView)
+        {
+            Vector3 planePoint =
+                _target.transform.position +
+                _target.transform.forward *
+                _clipPlaneOffset;
 
-    // The destination portal forward points into its room. Point the
-    // clipping normal back toward the virtual portal camera so the room
-    // side remains visible and the outside/sky side is removed.
-    Vector3 planeNormal =
-        -_target.transform.forward;
+            // Match the established portal-camera technique: remove everything
+            // behind the destination doorway by facing the plane away from the
+            // visible destination room.
+            Vector3 planeNormal =
+                -_target.transform.forward;
 
-    Vector3 cameraSpacePoint =
-        portalView.MultiplyPoint(planePoint);
+            Vector4 worldPlane =
+                new Vector4(
+                    planeNormal.x,
+                    planeNormal.y,
+                    planeNormal.z,
+                    -Vector3.Dot(planeNormal, planePoint));
 
-    Vector3 cameraSpaceNormal =
-        portalView.MultiplyVector(planeNormal).normalized;
-
-    return new Vector4(
-        cameraSpaceNormal.x,
-        cameraSpaceNormal.y,
-        cameraSpaceNormal.z,
-        -Vector3.Dot(
-            cameraSpacePoint,
-            cameraSpaceNormal));
-}
+            return
+                Matrix4x4.Transpose(portalView.inverse) *
+                worldPlane;
+        }
 
         private void CopyCameraSettings(Camera sourceCamera)
         {
