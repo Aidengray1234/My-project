@@ -557,7 +557,7 @@ namespace DoctorWhoVR.RealPortalV5.Editor
                 new Vector3(0f, 0f, 0.02f);
 
             surface.transform.localRotation =
-                Quaternion.Euler(0f, 180f, 0f);
+                Quaternion.identity;
 
             surface.transform.localScale =
                 new Vector3(2.4f, 3.4f, 1f);

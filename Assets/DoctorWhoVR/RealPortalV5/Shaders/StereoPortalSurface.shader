@@ -6,6 +6,7 @@ Shader "DoctorWhoVR/RealPortalV5/StereoPortalSurface"
         _RightTex ("Right Portal Eye", 2D) = "black" {}
         _Tint ("Tint", Color) = (1, 1, 1, 1)
         _Brightness ("Brightness", Range(0.5, 1.5)) = 1
+        _BackColor ("Back Cover", Color) = (0.008, 0.015, 0.035, 1)
     }
 
     SubShader
@@ -19,9 +20,12 @@ Shader "DoctorWhoVR/RealPortalV5/StereoPortalSurface"
 
         Pass
         {
-            Name "StereoPortalWindow"
+            Name "StereoPortalWindowV5_1"
 
-            Cull Back
+            // Render both sides. The intended front samples the live portal;
+            // the physical back is an opaque dark cover instead of an empty,
+            // broken doorway into the space between the two test rooms.
+            Cull Off
             ZWrite On
             ZTest LEqual
 
@@ -45,6 +49,7 @@ Shader "DoctorWhoVR/RealPortalV5/StereoPortalSurface"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
+                half4 _BackColor;
                 half _Brightness;
             CBUFFER_END
 
@@ -77,9 +82,18 @@ Shader "DoctorWhoVR/RealPortalV5/StereoPortalSurface"
                 return output;
             }
 
-            half4 Frag(Varyings input) : SV_Target
+            half4 Frag(
+                Varyings input,
+                FRONT_FACE_TYPE face : FRONT_FACE_SEMANTIC)
+                : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                bool isFront =
+                    IS_FRONT_VFACE(face, true, false);
+
+                if (!isFront)
+                    return _BackColor;
 
                 float2 uv =
                     input.screenPosition.xy /
