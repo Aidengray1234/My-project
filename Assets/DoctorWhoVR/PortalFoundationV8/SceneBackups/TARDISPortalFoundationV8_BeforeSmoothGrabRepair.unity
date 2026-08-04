@@ -385,7 +385,7 @@ MonoBehaviour:
   _lockedGrabReleaseDistance: 0.4
   _translationResistance: 0
   _rotationResistance: 0
-  _rigidBodySource: {fileID: 34352549}
+  _rigidBodySource: {fileID: 0}
   _rigidBodyDynamicOnRelease: 1
   _verticalReleaseMultiplier: 1
   _horizontalReleaseMultiplier: 1
@@ -409,7 +409,7 @@ MonoBehaviour:
       _poseBlendValue: 0
       _gripAlignTransformHandLeft: {fileID: 0}
       _gripAlignTransformHandRight: {fileID: 0}
-    _snapMode: 0
+    _snapMode: 3
     _snapDirection: 0
     _snapReference: 1
     _avatarGripPoseEntries: []
@@ -417,7 +417,7 @@ MonoBehaviour:
     _alignToControllerAxes: {fileID: 0}
     _grabProximityMode: 0
     _grabProximityBox: {fileID: 0}
-    _maxDistanceGrab: 0.3
+    _maxDistanceGrab: 0.2
     _grabProximityTransformUseSelf: 1
     _grabProximityTransform: {fileID: 0}
     _grabberProximityUseDefault: 1
@@ -688,26 +688,6 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4432095960718337311, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4432520240804770907, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4433451036813959663, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4433488120830194991, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4433493287764035217, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4870551386180313597, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -717,30 +697,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5174471408217882586, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5182864960075238326, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5692645754693826988, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5692674974713257682, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5692680673827253612, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5694210951867182104, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5694635526188203356, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
@@ -824,10 +780,6 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8190781259645682497, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 8272180297365260178, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -852,48 +804,7 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 8087084681152433075, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 5079397080202019652, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 4342800194934765833, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 4343585788419747145, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 2186677469557764777, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 5675141194147848522, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 5674847101523768586, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 4055998534951014549, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 8181182285676186685, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 7441184266804893474, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 190268239889615100, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 8741846507918573030, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 6499773796563208018, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 1345081411508717522, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 2702484028896174657, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 4109283319950091004, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 6823712083377961515, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 3664937995240313571, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 3999205643985649930, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 8744522928916616005, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 5304594879263813849, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 5473162173336260249, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 7947987908607301601, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 8513674653136422726, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 6739824651330700811, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 6937791289953409523, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 5483319924144283364, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 8386560291137647063, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 1110576746521337514, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 287897585702009865, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 2235779908737015576, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 15913484057780139, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 7090885306138113720, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 8638279485579693950, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 6602499598973957202, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 7693531897653949686, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 7676520841333995255, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 2513727680983627188, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 5850879458045841800, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 6215767196390531511, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
-    - {fileID: 2751862427896655252, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7195d091dac462e4db9ba0793d9a6727, type: 3}
 --- !u!1 &72204526 stripped
 GameObject:
@@ -925,6 +836,35 @@ MonoBehaviour:
   _avatar: {fileID: 0}
   _cooldown: 0.18
   _crossingEpsilon: 0.018
+--- !u!114 &72204530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 72204526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2b87341763ed1447b56652023d58f90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _parentToDestination: 0
+  _metersPerSecondNormal: 2.5
+  _metersPerSecondSprint: 4
+  _walkDirection: 0
+  _rotationDegreesPerSecondNormal: 120
+  _rotationDegreesPerSecondSprint: 120
+  _gravity: -9.81
+  _sprintButtonHand: 0
+  _sprintButton: 1
+  _triggerCollidersInteraction: 1
+  _collisionLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _capsuleRadius: 0.25
+  _maxStepHeight: 0.2
+  _maxSlopeDegrees: 35
+  _stepDistanceCheck: 0.2
 --- !u!114 &72204531
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -951,45 +891,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _maximumDistance: 12
---- !u!114 &72204536
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 72204526}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: df7bfae851a531a40bf20994d489fd65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _avatar: {fileID: 0}
-  _pressThreshold: 0.62
-  _releaseThreshold: 0.32
-  _testObjectGrabDistance: 0.3
---- !u!114 &72204537
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 72204526}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0d884abbe4430314aa706ea43b1b92e8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _avatar: {fileID: 0}
-  _walkSpeed: 2.6
-  _sprintSpeed: 4.1
-  _deadZone: 0.16
-  _useGripAsSprint: 0
-  _turnDegreesPerSecond: 120
-  _collisionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  _capsuleRadius: 0.24
-  _gravity: -9.81
 --- !u!1 &109231858
 GameObject:
   m_ObjectHideFlags: 0
@@ -1821,7 +1722,7 @@ MonoBehaviour:
   _lockedGrabReleaseDistance: 0.4
   _translationResistance: 0
   _rotationResistance: 0
-  _rigidBodySource: {fileID: 455136823}
+  _rigidBodySource: {fileID: 0}
   _rigidBodyDynamicOnRelease: 1
   _verticalReleaseMultiplier: 1
   _horizontalReleaseMultiplier: 1
@@ -1845,7 +1746,7 @@ MonoBehaviour:
       _poseBlendValue: 0
       _gripAlignTransformHandLeft: {fileID: 0}
       _gripAlignTransformHandRight: {fileID: 0}
-    _snapMode: 0
+    _snapMode: 3
     _snapDirection: 0
     _snapReference: 1
     _avatarGripPoseEntries: []
@@ -1853,7 +1754,7 @@ MonoBehaviour:
     _alignToControllerAxes: {fileID: 0}
     _grabProximityMode: 0
     _grabProximityBox: {fileID: 0}
-    _maxDistanceGrab: 0.3
+    _maxDistanceGrab: 0.2
     _grabProximityTransformUseSelf: 1
     _grabProximityTransform: {fileID: 0}
     _grabberProximityUseDefault: 1
@@ -2141,7 +2042,7 @@ MonoBehaviour:
   _lockedGrabReleaseDistance: 0.4
   _translationResistance: 0
   _rotationResistance: 0
-  _rigidBodySource: {fileID: 520153754}
+  _rigidBodySource: {fileID: 0}
   _rigidBodyDynamicOnRelease: 1
   _verticalReleaseMultiplier: 1
   _horizontalReleaseMultiplier: 1
@@ -2165,7 +2066,7 @@ MonoBehaviour:
       _poseBlendValue: 0
       _gripAlignTransformHandLeft: {fileID: 0}
       _gripAlignTransformHandRight: {fileID: 0}
-    _snapMode: 0
+    _snapMode: 3
     _snapDirection: 0
     _snapReference: 1
     _avatarGripPoseEntries: []
@@ -2173,7 +2074,7 @@ MonoBehaviour:
     _alignToControllerAxes: {fileID: 0}
     _grabProximityMode: 0
     _grabProximityBox: {fileID: 0}
-    _maxDistanceGrab: 0.3
+    _maxDistanceGrab: 0.2
     _grabProximityTransformUseSelf: 1
     _grabProximityTransform: {fileID: 0}
     _grabberProximityUseDefault: 1
@@ -5427,50 +5328,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1431475237}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &1442239988
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1442239990}
-  - component: {fileID: 1442239989}
-  m_Layer: 0
-  m_Name: V8 Smooth Grab Health Check
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1442239989
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1442239988}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 739950cfa25e7cf4d8defda151e451b0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!4 &1442239990
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1442239988}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 17
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1453829047
 GameObject:
   m_ObjectHideFlags: 0
@@ -6747,7 +6604,7 @@ MonoBehaviour:
   _lockedGrabReleaseDistance: 0.4
   _translationResistance: 0
   _rotationResistance: 0
-  _rigidBodySource: {fileID: 1822575724}
+  _rigidBodySource: {fileID: 0}
   _rigidBodyDynamicOnRelease: 1
   _verticalReleaseMultiplier: 1
   _horizontalReleaseMultiplier: 1
@@ -6771,7 +6628,7 @@ MonoBehaviour:
       _poseBlendValue: 0
       _gripAlignTransformHandLeft: {fileID: 0}
       _gripAlignTransformHandRight: {fileID: 0}
-    _snapMode: 0
+    _snapMode: 3
     _snapDirection: 0
     _snapReference: 1
     _avatarGripPoseEntries: []
@@ -6779,7 +6636,7 @@ MonoBehaviour:
     _alignToControllerAxes: {fileID: 0}
     _grabProximityMode: 0
     _grabProximityBox: {fileID: 0}
-    _maxDistanceGrab: 0.3
+    _maxDistanceGrab: 0.2
     _grabProximityTransformUseSelf: 1
     _grabProximityTransform: {fileID: 0}
     _grabberProximityUseDefault: 1
@@ -7345,7 +7202,7 @@ MonoBehaviour:
   _lockedGrabReleaseDistance: 0.4
   _translationResistance: 0
   _rotationResistance: 0
-  _rigidBodySource: {fileID: 1876283672}
+  _rigidBodySource: {fileID: 0}
   _rigidBodyDynamicOnRelease: 1
   _verticalReleaseMultiplier: 1
   _horizontalReleaseMultiplier: 1
@@ -7369,7 +7226,7 @@ MonoBehaviour:
       _poseBlendValue: 0
       _gripAlignTransformHandLeft: {fileID: 0}
       _gripAlignTransformHandRight: {fileID: 0}
-    _snapMode: 0
+    _snapMode: 3
     _snapDirection: 0
     _snapReference: 1
     _avatarGripPoseEntries: []
@@ -7377,7 +7234,7 @@ MonoBehaviour:
     _alignToControllerAxes: {fileID: 0}
     _grabProximityMode: 0
     _grabProximityBox: {fileID: 0}
-    _maxDistanceGrab: 0.3
+    _maxDistanceGrab: 0.2
     _grabProximityTransformUseSelf: 1
     _grabProximityTransform: {fileID: 0}
     _grabberProximityUseDefault: 1
@@ -7889,7 +7746,7 @@ MonoBehaviour:
   _lockedGrabReleaseDistance: 0.4
   _translationResistance: 0
   _rotationResistance: 0
-  _rigidBodySource: {fileID: 2083755834}
+  _rigidBodySource: {fileID: 0}
   _rigidBodyDynamicOnRelease: 1
   _verticalReleaseMultiplier: 1
   _horizontalReleaseMultiplier: 1
@@ -7913,7 +7770,7 @@ MonoBehaviour:
       _poseBlendValue: 0
       _gripAlignTransformHandLeft: {fileID: 0}
       _gripAlignTransformHandRight: {fileID: 0}
-    _snapMode: 0
+    _snapMode: 3
     _snapDirection: 0
     _snapReference: 1
     _avatarGripPoseEntries: []
@@ -7921,7 +7778,7 @@ MonoBehaviour:
     _alignToControllerAxes: {fileID: 0}
     _grabProximityMode: 0
     _grabProximityBox: {fileID: 0}
-    _maxDistanceGrab: 0.3
+    _maxDistanceGrab: 0.2
     _grabProximityTransformUseSelf: 1
     _grabProximityTransform: {fileID: 0}
     _grabberProximityUseDefault: 1
