@@ -247,7 +247,7 @@ namespace DoctorWhoVR.Editor
                         "Locomotion Vignette",
                         StringComparison.OrdinalIgnoreCase))
                 {
-                    child.gameObject.SetActive(false);
+                    UnityEngine.Object.DestroyImmediate(child.gameObject);
                 }
             }
         }
