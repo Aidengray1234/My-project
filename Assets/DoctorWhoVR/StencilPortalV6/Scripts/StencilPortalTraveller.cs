@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-using DoctorWhoVR.PortalHandsV7;
+using DoctorWhoVR.PortalFoundationV8;
 
 namespace DoctorWhoVR.StencilPortalV6
 {
     /// <summary>
-    /// Moves the complete XR Origin through a linked portal while preserving
-    /// the headset offset, controller hands, and currently held objects.
+    /// Moves the complete XR Origin through a portal and asks V8 to move held
+    /// objects and mapped-hand selections in the same frame.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StencilPortalTraveller : MonoBehaviour
@@ -104,10 +104,8 @@ namespace DoctorWhoVR.StencilPortalV6
                     ? _rigidbody.angularVelocity
                     : Vector3.zero;
 
-            // Normal-hand grabs still exist in the source coordinate space.
-            // Move them before the rig so there is no one-frame stretch.
-            PortalHeldObjectBridge.BeforeRigTeleport(
-                this,
+            PortalGrabTransferCoordinatorV8.BeforePlayerTeleport(
+                transform,
                 source);
 
             transform.rotation = destinationRootRotation;
@@ -135,10 +133,8 @@ namespace DoctorWhoVR.StencilPortalV6
 
             Physics.SyncTransforms();
 
-            // Grabs made by a mapped hand on the far side are already in the
-            // destination space. Transfer their selection to the real hand.
-            PortalHeldObjectBridge.AfterRigTeleport(
-                this,
+            PortalGrabTransferCoordinatorV8.AfterPlayerTeleport(
+                transform,
                 source);
 
             if (controllerWasEnabled)

@@ -3,16 +3,14 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using DoctorWhoVR.StencilPortalV6;
 
-namespace DoctorWhoVR.PortalHandsV7
+namespace DoctorWhoVR.PortalFoundationV8
 {
     /// <summary>
-    /// Teleports free rigidbodies through portals with velocity preserved.
-    /// Held objects transfer from the normal hand to the mapped far-side hand
-    /// when they cross before the player.
+    /// Seamlessly moves free or grabbed rigidbodies across a portal.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
-    public sealed class PortalPhysicsTraveller : MonoBehaviour
+    public sealed class PortalRigidbodyTravellerV8 : MonoBehaviour
     {
         private sealed class PortalState
         {
@@ -38,7 +36,7 @@ namespace DoctorWhoVR.PortalHandsV7
 
         private void OnEnable()
         {
-            InitializeStates();
+            ResetStates();
         }
 
         private void FixedUpdate()
@@ -58,28 +56,19 @@ namespace DoctorWhoVR.PortalHandsV7
 
                 if (!_states.TryGetValue(portal, out state))
                 {
-                    state = new PortalState
-                    {
-                        PreviousPosition = transform.position,
-                        PreviousSide =
-                            portal.SignedDistanceToPlane(
-                                transform.position)
-                    };
-
+                    state = CreateState(portal);
                     _states.Add(portal, state);
                     continue;
                 }
 
-                Vector3 currentPosition =
-                    transform.position;
+                Vector3 currentPosition = transform.position;
 
                 float currentSide =
-                    portal.SignedDistanceToPlane(
-                        currentPosition);
+                    portal.SignedDistanceToPlane(currentPosition);
 
                 if (Time.unscaledTime >= _nextTeleportTime &&
-                    state.PreviousSide > 0.015f &&
-                    currentSide <= -0.015f)
+                    state.PreviousSide > 0.012f &&
+                    currentSide <= -0.012f)
                 {
                     float denominator =
                         state.PreviousSide - currentSide;
@@ -99,16 +88,14 @@ namespace DoctorWhoVR.PortalHandsV7
                     if (portal.ContainsPoint(
                             crossingPoint,
                             0.12f,
-                            0.12f))
+                            0.12f) &&
+                        TryTeleport(portal))
                     {
-                        if (TryTeleport(portal))
-                        {
-                            _nextTeleportTime =
-                                Time.unscaledTime + _cooldown;
+                        _nextTeleportTime =
+                            Time.unscaledTime + _cooldown;
 
-                            InitializeStates();
-                            return;
-                        }
+                        ResetStates();
+                        return;
                     }
                 }
 
@@ -124,30 +111,24 @@ namespace DoctorWhoVR.PortalHandsV7
                 IXRSelectInteractor selecting =
                     _grab.firstInteractorSelecting;
 
-                PortalMappedInteractorMarker marker = null;
-
                 Component selectingComponent =
                     selecting as Component;
 
-                if (selectingComponent != null)
+                if (selectingComponent != null &&
+                    selectingComponent.GetComponent<
+                        PortalMappedInteractorMarkerV8>() != null)
                 {
-                    marker =
-                        selectingComponent.GetComponent<
-                            PortalMappedInteractorMarker>();
-                }
-
-                if (marker != null)
-                {
-                    // It was already teleported and is held by a mapped hand.
                     return false;
                 }
 
-                PortalHandInteractorBridge bridge =
-                    PortalHandInteractorBridge
+                PortalReachBridgeV8 bridge =
+                    PortalReachBridgeV8
                         .FindForNormalInteractor(selecting);
 
                 if (bridge == null ||
-                    bridge.ActivePortal != portal)
+                    !ReferenceEquals(
+                        bridge.ActivePortal,
+                        portal))
                 {
                     return false;
                 }
@@ -157,32 +138,45 @@ namespace DoctorWhoVR.PortalHandsV7
                         ? bridge.NormalInteractor.interactionManager
                         : null;
 
-                if (manager == null)
+                if (manager == null ||
+                    bridge.MappedInteractor == null)
+                {
                     return false;
+                }
 
                 manager.SelectExit(
-                    bridge.NormalInteractor,
-                    _grab);
+                    (IXRSelectInteractor)bridge.NormalInteractor,
+                    (IXRSelectInteractable)_grab);
 
-                PortalHeldObjectBridge.TeleportTransformAndBody(
-                    transform,
+                PortalTransferUtilityV8.TeleportRigidbody(
+                    _body,
                     portal);
 
                 manager.SelectEnter(
-                    bridge.MappedInteractor,
-                    _grab);
+                    (IXRSelectInteractor)bridge.MappedInteractor,
+                    (IXRSelectInteractable)_grab);
 
                 return true;
             }
 
-            PortalHeldObjectBridge.TeleportTransformAndBody(
-                transform,
+            PortalTransferUtilityV8.TeleportRigidbody(
+                _body,
                 portal);
 
             return true;
         }
 
-        private void InitializeStates()
+        private PortalState CreateState(StencilPortal portal)
+        {
+            return new PortalState
+            {
+                PreviousPosition = transform.position,
+                PreviousSide =
+                    portal.SignedDistanceToPlane(transform.position)
+            };
+        }
+
+        private void ResetStates()
         {
             _states.Clear();
 
@@ -191,18 +185,8 @@ namespace DoctorWhoVR.PortalHandsV7
 
             foreach (StencilPortal portal in portals)
             {
-                if (portal == null)
-                    continue;
-
-                _states.Add(
-                    portal,
-                    new PortalState
-                    {
-                        PreviousPosition = transform.position,
-                        PreviousSide =
-                            portal.SignedDistanceToPlane(
-                                transform.position)
-                    });
+                if (portal != null)
+                    _states.Add(portal, CreateState(portal));
             }
         }
     }

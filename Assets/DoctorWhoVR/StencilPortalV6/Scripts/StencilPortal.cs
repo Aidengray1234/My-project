@@ -4,8 +4,7 @@ using UnityEngine;
 namespace DoctorWhoVR.StencilPortalV6
 {
     /// <summary>
-    /// Handles reliable two-way XR crossing. V7 exposes the doorway geometry
-    /// helpers so hands and rigidbodies can use the exact same crossing test.
+    /// Working V6 stencil doorway plus public mapping helpers used by V8.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider))]
@@ -77,7 +76,7 @@ namespace DoctorWhoVR.StencilPortalV6
 
         private void LateUpdate()
         {
-            TrackCrossings();
+            TrackPlayerCrossings();
         }
 
         private void ConfigureTrigger()
@@ -93,10 +92,10 @@ namespace DoctorWhoVR.StencilPortalV6
                 new Vector3(
                     _openingWidth,
                     _openingHeight,
-                    0.7f);
+                    0.70f);
         }
 
-        private void TrackCrossings()
+        private void TrackPlayerCrossings()
         {
             _removeBuffer.Clear();
 
@@ -163,7 +162,8 @@ namespace DoctorWhoVR.StencilPortalV6
                             traveller.Head.position;
 
                         currentSide =
-                            SignedDistanceToPlane(currentHeadPosition);
+                            SignedDistanceToPlane(
+                                currentHeadPosition);
                     }
                 }
 
@@ -232,13 +232,23 @@ namespace DoctorWhoVR.StencilPortalV6
             return _target.transform.TransformDirection(localDirection);
         }
 
-        public Quaternion TransformRotationToTarget(Quaternion worldRotation)
+        public Quaternion TransformRotationToTarget(
+            Quaternion worldRotation)
         {
             return
                 _target.transform.rotation *
                 HalfTurn *
                 Quaternion.Inverse(transform.rotation) *
                 worldRotation;
+        }
+
+        public Matrix4x4 TransformMatrixToTarget(Matrix4x4 worldMatrix)
+        {
+            return
+                _target.transform.localToWorldMatrix *
+                Matrix4x4.Rotate(HalfTurn) *
+                transform.worldToLocalMatrix *
+                worldMatrix;
         }
     }
 }
