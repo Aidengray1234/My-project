@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/DoctorWhoVR/V4/Scenes/TARDISDoorwayV4.unity
-    guid: 3ba21b9afc11f37488cea9f55d218924
+    path: Assets/DoctorWhoVR/RealPortalV5/Scenes/TARDISRealPortalV5.unity
+    guid: 29a13176daa3cec4c8a71888847146d7
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: bfa1182bd221b4ca89619141f66f1260, type: 2}
     Unity.XR.WindowsMR.Settings: {fileID: 11400000, guid: dc5a169419fa04987b057f65238cf3ba, type: 2}
