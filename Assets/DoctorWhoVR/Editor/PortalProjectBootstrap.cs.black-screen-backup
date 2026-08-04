@@ -110,6 +110,8 @@ namespace DoctorWhoVR.Editor
             }
 
             RemoveVignetteObjects(setup);
+            if (setup.GetComponent<ComfortVignetteDisabler>() == null)
+                setup.AddComponent<ComfortVignetteDisabler>();
 
             GameObject xrOrigin = FindChildByName(setup.transform, "XR Origin (XR Rig)");
             Camera xrCamera = xrOrigin != null
