@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
-using DoctorWhoVR.PortalFoundationV8;
 
 namespace DoctorWhoVR.StencilPortalV6
 {
     /// <summary>
-    /// Moves the complete XR Origin through a portal and asks V8 to move held
-    /// objects and mapped-hand selections in the same frame.
+    /// Original V6 XR-Origin traveller. Full-UltimateXR V8 does not use this,
+    /// but it remains for compatibility with the separate V6 test scene.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StencilPortalTraveller : MonoBehaviour
@@ -94,19 +93,15 @@ namespace DoctorWhoVR.StencilPortalV6
             if (controllerWasEnabled)
                 _characterController.enabled = false;
 
-            Vector3 linearVelocity =
+            Vector3 oldVelocity =
                 _rigidbody != null
                     ? _rigidbody.velocity
                     : Vector3.zero;
 
-            Vector3 angularVelocity =
+            Vector3 oldAngularVelocity =
                 _rigidbody != null
                     ? _rigidbody.angularVelocity
                     : Vector3.zero;
-
-            PortalGrabTransferCoordinatorV8.BeforePlayerTeleport(
-                transform,
-                source);
 
             transform.rotation = destinationRootRotation;
 
@@ -125,17 +120,13 @@ namespace DoctorWhoVR.StencilPortalV6
                 _rigidbody.rotation = transform.rotation;
 
                 _rigidbody.velocity =
-                    source.TransformDirectionToTarget(linearVelocity);
+                    source.TransformDirectionToTarget(oldVelocity);
 
                 _rigidbody.angularVelocity =
-                    source.TransformDirectionToTarget(angularVelocity);
+                    source.TransformDirectionToTarget(oldAngularVelocity);
             }
 
             Physics.SyncTransforms();
-
-            PortalGrabTransferCoordinatorV8.AfterPlayerTeleport(
-                transform,
-                source);
 
             if (controllerWasEnabled)
                 _characterController.enabled = true;

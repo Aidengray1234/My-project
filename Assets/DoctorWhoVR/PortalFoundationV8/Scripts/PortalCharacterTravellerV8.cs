@@ -7,8 +7,8 @@ using DoctorWhoVR.StencilPortalV6;
 namespace DoctorWhoVR.PortalFoundationV8
 {
     /// <summary>
-    /// NPC/character-ready portal adapter. Supports ordinary Transforms,
-    /// CharacterController, Rigidbody, and NavMeshAgent roots.
+    /// Future NPC adapter supporting Transform, Rigidbody,
+    /// CharacterController, and NavMeshAgent roots.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PortalCharacterTravellerV8 : MonoBehaviour
@@ -34,7 +34,12 @@ namespace DoctorWhoVR.PortalFoundationV8
 
         private Transform CrossingPoint
         {
-            get { return _crossingPoint != null ? _crossingPoint : transform; }
+            get
+            {
+                return _crossingPoint != null
+                    ? _crossingPoint
+                    : transform;
+            }
         }
 
         private void Awake()
@@ -51,13 +56,15 @@ namespace DoctorWhoVR.PortalFoundationV8
 
         private void LateUpdate()
         {
-            StencilPortal[] portals =
-                FindObjectsOfType<StencilPortal>();
-
-            foreach (StencilPortal portal in portals)
+            foreach (
+                StencilPortal portal in
+                FindObjectsOfType<StencilPortal>())
             {
-                if (portal == null || portal.Target == null)
+                if (portal == null ||
+                    portal.Target == null)
+                {
                     continue;
+                }
 
                 PortalState state;
 
@@ -68,7 +75,8 @@ namespace DoctorWhoVR.PortalFoundationV8
                     continue;
                 }
 
-                Vector3 currentPosition = CrossingPoint.position;
+                Vector3 currentPosition =
+                    CrossingPoint.position;
 
                 float currentSide =
                     portal.SignedDistanceToPlane(currentPosition);
@@ -86,18 +94,19 @@ namespace DoctorWhoVR.PortalFoundationV8
                                 state.PreviousSide / denominator)
                             : 1f;
 
-                    Vector3 crossing =
+                    Vector3 crossingPoint =
                         Vector3.Lerp(
                             state.PreviousPosition,
                             currentPosition,
                             amount);
 
                     if (portal.ContainsPoint(
-                            crossing,
+                            crossingPoint,
                             0.15f,
                             0.15f))
                     {
                         TeleportCharacter(portal);
+
                         _nextTeleportTime =
                             Time.unscaledTime + _cooldown;
 
@@ -113,12 +122,12 @@ namespace DoctorWhoVR.PortalFoundationV8
 
         private void TeleportCharacter(StencilPortal source)
         {
-            Vector3 destination =
+            Vector3 destinationPosition =
                 source.TransformPointToTarget(transform.position) +
                 source.Target.transform.forward *
                 source.Target.ExitOffset;
 
-            Quaternion rotation =
+            Quaternion destinationRotation =
                 source.TransformRotationToTarget(transform.rotation);
 
             Vector3 bodyVelocity =
@@ -132,29 +141,32 @@ namespace DoctorWhoVR.PortalFoundationV8
                     : Vector3.zero;
 
             bool controllerEnabled =
-                _controller != null && _controller.enabled;
+                _controller != null &&
+                _controller.enabled;
 
             if (controllerEnabled)
                 _controller.enabled = false;
 
             if (_agent != null && _agent.enabled)
             {
-                _agent.Warp(destination);
-                transform.rotation = rotation;
+                _agent.Warp(destinationPosition);
+                transform.rotation = destinationRotation;
+
                 _agent.velocity =
                     source.TransformDirectionToTarget(agentVelocity);
             }
             else
             {
                 transform.SetPositionAndRotation(
-                    destination,
-                    rotation);
+                    destinationPosition,
+                    destinationRotation);
             }
 
             if (_body != null)
             {
-                _body.position = destination;
-                _body.rotation = rotation;
+                _body.position = destinationPosition;
+                _body.rotation = destinationRotation;
+
                 _body.velocity =
                     source.TransformDirectionToTarget(bodyVelocity);
             }
@@ -174,7 +186,8 @@ namespace DoctorWhoVR.PortalFoundationV8
             {
                 PreviousPosition = CrossingPoint.position,
                 PreviousSide =
-                    portal.SignedDistanceToPlane(CrossingPoint.position)
+                    portal.SignedDistanceToPlane(
+                        CrossingPoint.position)
             };
         }
 

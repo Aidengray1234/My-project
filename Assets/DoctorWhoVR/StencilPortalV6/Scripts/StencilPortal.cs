@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DoctorWhoVR.StencilPortalV6
 {
     /// <summary>
-    /// Working V6 stencil doorway plus public mapping helpers used by V8.
+    /// Working V6 stencil doorway with public mapping helpers used by V8.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider))]
@@ -76,7 +76,7 @@ namespace DoctorWhoVR.StencilPortalV6
 
         private void LateUpdate()
         {
-            TrackPlayerCrossings();
+            TrackLegacyV6Travellers();
         }
 
         private void ConfigureTrigger()
@@ -88,6 +88,7 @@ namespace DoctorWhoVR.StencilPortalV6
 
             trigger.isTrigger = true;
             trigger.center = Vector3.zero;
+
             trigger.size =
                 new Vector3(
                     _openingWidth,
@@ -95,7 +96,7 @@ namespace DoctorWhoVR.StencilPortalV6
                     0.70f);
         }
 
-        private void TrackPlayerCrossings()
+        private void TrackLegacyV6Travellers()
         {
             _removeBuffer.Clear();
 
@@ -242,7 +243,8 @@ namespace DoctorWhoVR.StencilPortalV6
                 worldRotation;
         }
 
-        public Matrix4x4 TransformMatrixToTarget(Matrix4x4 worldMatrix)
+        public Matrix4x4 TransformMatrixToTarget(
+            Matrix4x4 worldMatrix)
         {
             return
                 _target.transform.localToWorldMatrix *

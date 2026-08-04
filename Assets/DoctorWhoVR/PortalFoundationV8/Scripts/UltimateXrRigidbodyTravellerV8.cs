@@ -1,16 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
+using UltimateXR.Manipulation;
 using DoctorWhoVR.StencilPortalV6;
 
 namespace DoctorWhoVR.PortalFoundationV8
 {
     /// <summary>
-    /// Seamlessly moves free or grabbed rigidbodies across a portal.
+    /// Free UltimateXR grabbable objects preserve position, rotation, velocity,
+    /// and spin when crossing. Objects being held wait for the avatar crossing
+    /// so the framework grip stays stable.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
-    public sealed class PortalRigidbodyTravellerV8 : MonoBehaviour
+    public sealed class UltimateXrRigidbodyTravellerV8 : MonoBehaviour
     {
         private sealed class PortalState
         {
@@ -25,13 +27,13 @@ namespace DoctorWhoVR.PortalFoundationV8
                 new Dictionary<StencilPortal, PortalState>();
 
         private Rigidbody _body;
-        private XRGrabInteractable _grab;
+        private UxrGrabbableObject _grabbable;
         private float _nextTeleportTime;
 
         private void Awake()
         {
             _body = GetComponent<Rigidbody>();
-            _grab = GetComponent<XRGrabInteractable>();
+            _grabbable = GetComponent<UxrGrabbableObject>();
         }
 
         private void OnEnable()
@@ -41,6 +43,10 @@ namespace DoctorWhoVR.PortalFoundationV8
 
         private void FixedUpdate()
         {
+            bool isGrabbed =
+                _grabbable != null &&
+                UxrGrabManager.Instance.IsBeingGrabbed(_grabbable);
+
             StencilPortal[] portals =
                 FindObjectsOfType<StencilPortal>();
 
@@ -62,11 +68,11 @@ namespace DoctorWhoVR.PortalFoundationV8
                 }
 
                 Vector3 currentPosition = transform.position;
-
                 float currentSide =
                     portal.SignedDistanceToPlane(currentPosition);
 
-                if (Time.unscaledTime >= _nextTeleportTime &&
+                if (!isGrabbed &&
+                    Time.unscaledTime >= _nextTeleportTime &&
                     state.PreviousSide > 0.012f &&
                     currentSide <= -0.012f)
                 {
@@ -88,13 +94,12 @@ namespace DoctorWhoVR.PortalFoundationV8
                     if (portal.ContainsPoint(
                             crossingPoint,
                             0.12f,
-                            0.12f) &&
-                        TryTeleport(portal))
+                            0.12f))
                     {
-                        _nextTeleportTime =
-                            Time.unscaledTime + _cooldown;
+                        UltimateXrPortalTransferUtilityV8
+                            .TeleportRigidbody(_body, portal);
 
-                        ResetStates();
+                        MarkExternallyTeleported();
                         return;
                     }
                 }
@@ -104,66 +109,12 @@ namespace DoctorWhoVR.PortalFoundationV8
             }
         }
 
-        private bool TryTeleport(StencilPortal portal)
+        public void MarkExternallyTeleported()
         {
-            if (_grab != null && _grab.isSelected)
-            {
-                IXRSelectInteractor selecting =
-                    _grab.firstInteractorSelecting;
+            _nextTeleportTime =
+                Time.unscaledTime + _cooldown;
 
-                Component selectingComponent =
-                    selecting as Component;
-
-                if (selectingComponent != null &&
-                    selectingComponent.GetComponent<
-                        PortalMappedInteractorMarkerV8>() != null)
-                {
-                    return false;
-                }
-
-                PortalReachBridgeV8 bridge =
-                    PortalReachBridgeV8
-                        .FindForNormalInteractor(selecting);
-
-                if (bridge == null ||
-                    !ReferenceEquals(
-                        bridge.ActivePortal,
-                        portal))
-                {
-                    return false;
-                }
-
-                XRInteractionManager manager =
-                    bridge.NormalInteractor != null
-                        ? bridge.NormalInteractor.interactionManager
-                        : null;
-
-                if (manager == null ||
-                    bridge.MappedInteractor == null)
-                {
-                    return false;
-                }
-
-                manager.SelectExit(
-                    (IXRSelectInteractor)bridge.NormalInteractor,
-                    (IXRSelectInteractable)_grab);
-
-                PortalTransferUtilityV8.TeleportRigidbody(
-                    _body,
-                    portal);
-
-                manager.SelectEnter(
-                    (IXRSelectInteractor)bridge.MappedInteractor,
-                    (IXRSelectInteractable)_grab);
-
-                return true;
-            }
-
-            PortalTransferUtilityV8.TeleportRigidbody(
-                _body,
-                portal);
-
-            return true;
+            ResetStates();
         }
 
         private PortalState CreateState(StencilPortal portal)
@@ -180,10 +131,9 @@ namespace DoctorWhoVR.PortalFoundationV8
         {
             _states.Clear();
 
-            StencilPortal[] portals =
-                FindObjectsOfType<StencilPortal>();
-
-            foreach (StencilPortal portal in portals)
+            foreach (
+                StencilPortal portal in
+                FindObjectsOfType<StencilPortal>())
             {
                 if (portal != null)
                     _states.Add(portal, CreateState(portal));

@@ -6,13 +6,13 @@ using DoctorWhoVR.StencilPortalV6;
 namespace DoctorWhoVR.PortalFoundationV8
 {
     /// <summary>
-    /// Creates a stencil-only visual clone for hands, held objects, rigidbodies,
-    /// and future animated characters.
+    /// Visual-only stencil clone for UltimateXR hands, moving objects, and
+    /// future skinned NPCs. It never creates controllers or interaction logic.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class PortalDynamicVisualProxyV8 : MonoBehaviour
+    public sealed class UltimateXrPortalVisualProxyV8 : MonoBehaviour
     {
-        [SerializeField, Min(1f)] private float _maximumDistance = 18f;
+        [SerializeField, Min(1f)] private float _maximumDistance = 12f;
 
         private GameObject _proxyRoot;
         private readonly List<Material> _runtimeMaterials =
@@ -53,7 +53,7 @@ namespace DoctorWhoVR.PortalFoundationV8
                 return;
 
             _proxyRoot =
-                new GameObject(name + " V8 Portal Proxy");
+                new GameObject(name + " Portal Visual Proxy");
 
             _proxyRoot.hideFlags = HideFlags.DontSave;
 
@@ -117,12 +117,15 @@ namespace DoctorWhoVR.PortalFoundationV8
                     map[sourceRenderer.transform];
 
                 MeshFilter cloneFilter =
-                    cloneTransform.gameObject.AddComponent<MeshFilter>();
+                    cloneTransform.gameObject
+                        .AddComponent<MeshFilter>();
 
-                cloneFilter.sharedMesh = sourceFilter.sharedMesh;
+                cloneFilter.sharedMesh =
+                    sourceFilter.sharedMesh;
 
                 MeshRenderer cloneRenderer =
-                    cloneTransform.gameObject.AddComponent<MeshRenderer>();
+                    cloneTransform.gameObject
+                        .AddComponent<MeshRenderer>();
 
                 ConfigureRenderer(
                     sourceRenderer,
@@ -141,11 +144,17 @@ namespace DoctorWhoVR.PortalFoundationV8
                     cloneTransform.gameObject
                         .AddComponent<SkinnedMeshRenderer>();
 
-                cloneRenderer.sharedMesh = sourceRenderer.sharedMesh;
-                cloneRenderer.localBounds = sourceRenderer.localBounds;
+                cloneRenderer.sharedMesh =
+                    sourceRenderer.sharedMesh;
+
+                cloneRenderer.localBounds =
+                    sourceRenderer.localBounds;
+
                 cloneRenderer.updateWhenOffscreen = true;
 
-                Transform[] sourceBones = sourceRenderer.bones;
+                Transform[] sourceBones =
+                    sourceRenderer.bones;
+
                 Transform[] cloneBones =
                     new Transform[sourceBones.Length];
 
@@ -153,7 +162,8 @@ namespace DoctorWhoVR.PortalFoundationV8
                      index < sourceBones.Length;
                      ++index)
                 {
-                    Transform sourceBone = sourceBones[index];
+                    Transform sourceBone =
+                        sourceBones[index];
 
                     cloneBones[index] =
                         sourceBone != null &&
@@ -183,13 +193,20 @@ namespace DoctorWhoVR.PortalFoundationV8
             Renderer destination,
             Shader proxyShader)
         {
-            Material[] sourceMaterials = source.sharedMaterials;
-            int count = Mathf.Max(1, sourceMaterials.Length);
-            Material[] materials = new Material[count];
+            Material[] sourceMaterials =
+                source.sharedMaterials;
 
-            for (int index = 0; index < count; ++index)
+            int materialCount =
+                Mathf.Max(1, sourceMaterials.Length);
+
+            Material[] proxyMaterials =
+                new Material[materialCount];
+
+            for (int index = 0;
+                 index < materialCount;
+                 ++index)
             {
-                Material original =
+                Material sourceMaterial =
                     sourceMaterials.Length > 0
                         ? sourceMaterials[
                             Mathf.Min(
@@ -197,24 +214,37 @@ namespace DoctorWhoVR.PortalFoundationV8
                                 sourceMaterials.Length - 1)]
                         : null;
 
-                Material proxy = new Material(proxyShader);
+                Material proxyMaterial =
+                    new Material(proxyShader);
+
+                proxyMaterial.name =
+                    name + " Portal Proxy Material";
 
                 Color color = Color.white;
 
-                if (original != null)
+                if (sourceMaterial != null)
                 {
-                    if (original.HasProperty("_BaseColor"))
-                        color = original.GetColor("_BaseColor");
-                    else if (original.HasProperty("_Color"))
-                        color = original.GetColor("_Color");
+                    if (sourceMaterial.HasProperty("_BaseColor"))
+                    {
+                        color =
+                            sourceMaterial.GetColor("_BaseColor");
+                    }
+                    else if (sourceMaterial.HasProperty("_Color"))
+                    {
+                        color =
+                            sourceMaterial.GetColor("_Color");
+                    }
                 }
 
-                proxy.SetColor("_BaseColor", color);
-                materials[index] = proxy;
-                _runtimeMaterials.Add(proxy);
+                proxyMaterial.SetColor(
+                    "_BaseColor",
+                    color);
+
+                proxyMaterials[index] = proxyMaterial;
+                _runtimeMaterials.Add(proxyMaterial);
             }
 
-            destination.sharedMaterials = materials;
+            destination.sharedMaterials = proxyMaterials;
             destination.shadowCastingMode = ShadowCastingMode.Off;
             destination.receiveShadows = false;
         }
@@ -224,13 +254,12 @@ namespace DoctorWhoVR.PortalFoundationV8
             if (_proxyRoot == null)
                 return;
 
-            StencilPortal[] portals =
-                FindObjectsOfType<StencilPortal>();
-
-            StencilPortal nearest = null;
+            StencilPortal nearestPortal = null;
             float nearestDistance = float.PositiveInfinity;
 
-            foreach (StencilPortal portal in portals)
+            foreach (
+                StencilPortal portal in
+                FindObjectsOfType<StencilPortal>())
             {
                 float distance =
                     Vector3.Distance(
@@ -240,12 +269,12 @@ namespace DoctorWhoVR.PortalFoundationV8
                 if (distance < nearestDistance)
                 {
                     nearestDistance = distance;
-                    nearest = portal;
+                    nearestPortal = portal;
                 }
             }
 
-            if (nearest == null ||
-                nearest.Target == null ||
+            if (nearestPortal == null ||
+                nearestPortal.Target == null ||
                 nearestDistance > _maximumDistance)
             {
                 _proxyRoot.SetActive(false);
@@ -253,10 +282,11 @@ namespace DoctorWhoVR.PortalFoundationV8
             }
 
             Matrix4x4 mapped =
-                nearest.TransformMatrixToTarget(
+                nearestPortal.TransformMatrixToTarget(
                     transform.localToWorldMatrix);
 
-            Vector4 positionColumn = mapped.GetColumn(3);
+            Vector4 positionColumn =
+                mapped.GetColumn(3);
 
             _proxyRoot.transform.SetPositionAndRotation(
                 new Vector3(
@@ -265,7 +295,9 @@ namespace DoctorWhoVR.PortalFoundationV8
                     positionColumn.z),
                 mapped.rotation);
 
-            _proxyRoot.transform.localScale = mapped.lossyScale;
+            _proxyRoot.transform.localScale =
+                mapped.lossyScale;
+
             _proxyRoot.SetActive(true);
         }
     }
