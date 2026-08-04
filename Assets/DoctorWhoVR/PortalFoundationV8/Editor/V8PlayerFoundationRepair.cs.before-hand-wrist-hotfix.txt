@@ -480,12 +480,12 @@ namespace DoctorWhoVR.PortalFoundationV8.Editor
             Transform leftHand =
                 animator != null
                     ? animator.GetBoneTransform(HumanBodyBones.LeftHand)
-                    : avatar.LeftHand.Wrist;
+                    : avatar.LeftHand;
 
             Transform rightHand =
                 animator != null
                     ? animator.GetBoneTransform(HumanBodyBones.RightHand)
-                    : avatar.RightHand.Wrist;
+                    : avatar.RightHand;
 
             Transform leftFoot =
                 animator != null
